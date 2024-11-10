@@ -1,42 +1,58 @@
 '''*** Import Section ***'''
 from __future__ import division                     # to allow compatibility of code between Python 2.x and 3.x with minimal overhead
-from collections import Counter                     # library and method for counting hashable objects
-import argparse                                     # to define arguments to the program in a user-friendly way
-import os                                           # provides functions to interact with local file system
-import os.path as osp                               # provides range of methods to manipulate files and directories
-import pickle as pkl                                # to implement binary protocols for serializing and de-serializing object structure
-import pandas as pd                                 # popular data-analysis library for machine learning.
-import time                                         # for time-related python functions
-import sys                                          # provides access for variables used or maintained by intrepreter
-import torch                                        # machine learning library for tensor and neural-network computations
-from torch.autograd import Variable                 # Auto Differentaion package for managing scalar based values
-import cv2                                          # OpenCV Library to carry out Computer Vision tasks
-import emoji
-import warnings                                     # to manage warnings that are displayed during execution
-warnings.filterwarnings(
-    'ignore')                                       # to ignore warning messages while code execution
-print('\033[1m' + '\033[91m' + "Kickstarting YOLO...\n")
-from util.parser import load_classes                # navigates to load_classess function in util.parser.py
-from util.model import Darknet                      # to load weights into our model for vehicle detection
-from util.image_processor import preparing_image    # to pass input image into model,after resizing it into yolo format
-from util.utils import non_max_suppression          # to do non-max-suppression in the detected bounding box objects i.e cars
-from util.dynamic_signal_switching import switch_signal
+# to do non-max-suppression in the detected bounding box objects i.e cars
+# to pass input image into model,after resizing it into yolo format
+from util.image_processor import preparing_image
+# to load weights into our model for vehicle detection
+from util.model import Darknet
+# navigates to load_classess function in util.parser.py
+from util.parser import load_classes
+# library and method for counting hashable objects
+from collections import Counter
 from util.dynamic_signal_switching import avg_signal_oc_time
+from util.dynamic_signal_switching import switch_signal
+from util.utils import non_max_suppression
+# to define arguments to the program in a user-friendly way
+import argparse
+# provides functions to interact with local file system
+import os
+# provides range of methods to manipulate files and directories
+import os.path as osp
+# to implement binary protocols for serializing and de-serializing object structure
+import pickle as pkl
+# popular data-analysis library for machine learning.
+import pandas as pd
+# for time-related python functions
+import time
+# provides access for variables used or maintained by intrepreter
+import sys
+# machine learning library for tensor and neural-network computations
+import torch
+# Auto Differentaion package for managing scalar based values
+from torch.autograd import Variable
+# OpenCV Library to carry out Computer Vision tasks
+import cv2
+import emoji
+# to manage warnings that are displayed during execution
+import warnings
+warnings.filterwarnings(
+    # to ignore warning messages while code execution
+    'ignore')
+print('\033[1m' + '\033[91m' + "Kickstarting YOLO...\n")
 
 
-#*** Parsing Arguments to YOLO Model ***
+# *** Parsing Arguments to YOLO Model ***
 def arg_parse():
     parser = argparse.ArgumentParser(
-                        description=
-                        'YOLO Vehicle Detection Model for Intelligent Traffic Management System')
+        description='YOLO Vehicle Detection Model for Intelligent Traffic Management System')
     parser.add_argument("--images",
                         dest='images',
                         help="Image / Directory containing images to  vehicle detection upon",
                         default="vehicles-on-lanes",
                         type=str)
-    parser.add_argument("--bs", 
-                        dest="bs", 
-                        help="Batch size", 
+    parser.add_argument("--bs",
+                        dest="bs",
+                        help="Batch size",
                         default=1)
     parser.add_argument("--confidence_score",
                         dest="confidence",
@@ -57,12 +73,11 @@ def arg_parse():
                         default="weights/yolov3.weights",
                         type=str)
     parser.add_argument(
-                        "--reso",
-                        dest='reso',
-                        help=
-                        "Input resolution of the network. Increase to increase accuracy. Decrease to increase speed",
-                        default="416",
-                        type=str)
+        "--reso",
+        dest='reso',
+        help="Input resolution of the network. Increase to increase accuracy. Decrease to increase speed",
+        default="416",
+        type=str)
     return parser.parse_args()
 
 
@@ -74,10 +89,10 @@ nms_thesh = float(args.nms_thresh)
 start = 0
 CUDA = torch.cuda.is_available()
 
-#***Loading Dataset Class File***
+# ***Loading Dataset Class File***
 classes = load_classes("data/idd.names")
 
-#***Setting up the neural network***
+# ***Setting up the neural network***
 model = Darknet(args.cfgfile)
 print('\033[0m' + "Input Data Passed Into YOLO Model..." + u'\N{check mark}')
 model.load_weights(args.weightsfile)
@@ -92,13 +107,13 @@ num_classes = model.num_classes
 print('\033[1m' + '\033[92m' +
       "Performing Vehicle Detection with YOLO Neural Network..." + '\033[0m' +
       u'\N{check mark}')
-#Putting YOLO Model into GPU:
+# Putting YOLO Model into GPU:
 if CUDA:
     model.cuda()
 model.eval()
 read_dir = time.time()
 
-#***Vehicle Detection Phase***
+# ***Vehicle Detection Phase***
 try:
     imlist = [
         osp.join(osp.realpath('.'), images, img) for img in os.listdir(images)
@@ -157,9 +172,9 @@ print(
 print('\033[1m' +
       "{:25s}: ".format("\nDetected  (" + str(len(imlist)) + " inputs)"))
 print('\033[0m')
-#Loading the image, if present :
+# Loading the image, if present :
 for i, batch in enumerate(im_batches):
-    #load the image
+    # load the image
     vehicle_count = 0
     start = time.time()
     if CUDA:
@@ -197,7 +212,7 @@ for i, batch in enumerate(im_batches):
             imlist[i * batch_size:min((i + 1) * batch_size, len(imlist))]):
         vehicle_count = 0
         input_image_count += 1
-        #denser_lane =
+        # denser_lane =
         im_id = i * batch_size + im_num
         objs = [classes[int(x[-1])] for x in output if int(x[0]) == im_id]
         vc = Counter(objs)
@@ -219,7 +234,8 @@ for i, batch in enumerate(im_batches):
         '''print(
             '\033[0m' +
             "           File Name:     {0:20s}.".format(image.split("/")[-1]))'''
-        print('\033[0m' +"           {:15} {}".format("Vehicle Type", "Count"))
+        print('\033[0m' +
+              "           {:15} {}".format("Vehicle Type", "Count"))
         for key, value in sorted(vc.items()):
             if key == "car" or key == "motorbike" or key == "truck" or key == "bicycle":
                 print('\033[0m' + "            {:15s} {}".format(key, value))
